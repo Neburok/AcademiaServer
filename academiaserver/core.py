@@ -1,9 +1,9 @@
 from datetime import datetime
 import os
 from .logger import log_event
-
 #INBOX_DIR = "inbox"
 from .config import INBOX_DIR
+
 
 def ensure_inbox_directory():
     os.makedirs(INBOX_DIR, exist_ok=True)
@@ -21,3 +21,17 @@ def save_idea(text):
         f.write(text)
 
     log_event(f"Idea guardada: {filename}")
+
+def list_ideas():
+    if not os.path.exists(INBOX_DIR):
+        print("No hay ideas guardadas aún.")
+        return
+
+    files = sorted(os.listdir(INBOX_DIR))
+    if not files:
+        print("No hay ideas guardadas.")
+        return
+
+    for f in files:
+        print(f)
+
