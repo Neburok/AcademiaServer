@@ -17,8 +17,7 @@ def show_logs():
     log_file = os.path.join(LOG_DIR, "activity.log")
 
     if not os.path.exists(log_file):
-        print("No hay logs aún.")
-        return
+        return ""
 
     with open(log_file, "r", encoding="utf-8") as f:
-        print(f.read())
+        return f.read()
