@@ -8,15 +8,22 @@ from fastapi import HTTPException
 
 app = FastAPI(title="AcademiaServer API")
 
-
 class IdeaRequest(BaseModel):
-    text: str
+    title: str
+    content: str
+
+#class IdeaRequest(BaseModel):
+#    text: str
 
 
 @app.post("/save")
 def save_idea_endpoint(request: IdeaRequest):
-    save_idea(request.text)
-    return {"status": "Idea guardada correctamente"}
+    idea = save_idea(
+        title=request.title,
+        content=request.content,
+        source="api"
+    )
+    return idea
 
 
 @app.get("/list")
