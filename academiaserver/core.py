@@ -8,6 +8,7 @@ from .models import Idea
 
 
 
+
 def ensure_inbox_directory():
     os.makedirs(INBOX_DIR, exist_ok=True)
 
@@ -28,7 +29,10 @@ import json
 from .models import Idea
 
 
-def save_idea(title: str, content: str, source: str = "cli"):
+def save_idea(title, content, tags=None, source="cli"):
+    if tags is None:
+        tags = []
+
     ensure_inbox_directory()
 
     idea_id = generate_daily_id()
@@ -38,7 +42,7 @@ def save_idea(title: str, content: str, source: str = "cli"):
         title=title,
         content=content,
         created_at=datetime.now(),
-        tags=[],
+        tags=tags,
         source=source
     )
 
@@ -59,6 +63,35 @@ def list_ideas():
     files = sorted(os.listdir(INBOX_DIR))
     return files
 
+import json
+
+def load_all_ideas():
+    ideas = []
+
+    if not os.path.exists(INBOX_DIR):
+        return ideas
+
+    files = sorted(os.listdir(INBOX_DIR))
+
+    for filename in files:
+        if not filename.endswith(".json"):
+            continue
+
+        filepath = os.path.join(INBOX_DIR, filename)
+
+        if os.path.getsize(filepath) == 0:
+            continue  # saltar archivos vacíos
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                idea = json.load(f)
+                ideas.append(idea)
+        except json.JSONDecodeError:
+            print(f"⚠️ Archivo corrupto ignorado: {filename}")
+            continue
+
+    return ideas
+
 def get_idea_by_id(idea_id: str):
     filepath = os.path.join(INBOX_DIR, f"{idea_id}.json")
 
@@ -68,4 +101,12 @@ def get_idea_by_id(idea_id: str):
     with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
 
+def search_ideas(query: str):
+    ideas = load_all_ideas()
+    query = query.lower()
 
+    return [
+        idea for idea in ideas
+        if query in idea["title"].lower()
+        or query in idea["content"].lower()
+    ]

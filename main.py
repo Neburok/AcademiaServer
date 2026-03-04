@@ -1,7 +1,8 @@
 import argparse
-from academiaserver.core import save_idea, list_ideas
+from academiaserver.core import save_idea, list_ideas, search_ideas
 from academiaserver.logger import show_logs
 from academiaserver.core import get_idea_by_id
+from academiaserver.core import search_ideas
 
 
 def main():
@@ -19,6 +20,8 @@ def main():
     get_parser = subparsers.add_parser("get", help="Obtener idea por ID")
     get_parser.add_argument("--id", required=True, help="ID de la idea")
 
+    search_parser = subparsers.add_parser("search")
+    search_parser.add_argument("query", type=str)
    # save_parser = subparsers.add_parser("save", help="Guardar nueva idea")
    # save_parser.add_argument("text", nargs="+", help="Texto de la idea")
 
@@ -55,6 +58,14 @@ def main():
             print("Idea no encontrada.")
         else:
             print(idea)
+
+    elif args.command == "search":
+        results = search_ideas(args.query)
+        if not results:
+            print("No se encontraron ideas.")
+        else:
+            for idea in results:
+                print(f"{idea['id']} - {idea['title']}")
 
     else:
         parser.print_help()
