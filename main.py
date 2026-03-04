@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 import os
 
@@ -14,7 +15,7 @@ def save_idea(text):
     filepath = os.path.join(INBOX_DIR, filename)
 
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write(f"# Idea\n\n")
+        f.write("# Idea Académica\n\n")
         f.write(f"**Fecha:** {datetime.now()}\n\n")
         f.write(text)
 
@@ -25,8 +26,16 @@ def log_event(message):
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(f"{datetime.now()} - {message}\n")
 
+def show_help():
+    print("Uso:")
+    print('  python main.py "Texto de la idea académica"')
+
 if __name__ == "__main__":
     ensure_directories()
-    idea = input("Escribe tu idea académica: ")
-    save_idea(idea)
-    print("Idea guardada correctamente.")
+
+    if len(sys.argv) < 2:
+        show_help()
+    else:
+        idea_text = " ".join(sys.argv[1:])
+        save_idea(idea_text)
+        print("Idea guardada correctamente.")
