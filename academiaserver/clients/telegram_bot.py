@@ -6,6 +6,9 @@ import requests
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from academiaserver.processing.pipeline import process_note
+from academiaserver.core import save_idea
+
 
 load_dotenv()
 
@@ -16,42 +19,31 @@ API_URL = os.getenv("API_URL")
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🤖 Jarvis Académico conectado.\nEnvíame una idea y la guardaré.")
 
-def classify_message(text: str) -> str:
-    text_lower = text.lower()
-
-    if any(word in text_lower for word in ["acuérdame", "recuerdame", "recordar", "recuérdame"]):
-        return "recordatorio"
-
-    if any(word in text_lower for word in ["idea", "propuesta", "proyecto"]):
-        return "idea"
-
-    if any(word in text_lower for word in ["definición", "concepto", "explicación", "teoría"]):
-        return "apunte"
-
-    return "nota"
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     text = update.message.text
 
-    category = classify_message(text)
-    title = generate_title(text)
-    data = {
-        "title": title,
-        "content": text,
-        "tags": [category]
-    }
+    try:
 
-    response = requests.post(f"{API_URL}/save", json=data)
+        # pipeline
+        note = process_note(text, source="telegram")
 
-    if response.status_code == 200:
-        idea = response.json()
-        await update.message.reply_text(f"✅ Idea guardada con ID: {idea['id']}")
-    else:
-        await update.message.reply_text("❌ Error al guardar la idea.")
+        # guardar
+        saved = save_idea(note)
 
-def generate_title(text: str) -> str:
-    words = text.split()
-    return " ".join(words[:8])  # primeras 8 palabras
+        await update.message.reply_text(
+            f"✅ Nota guardada con ID: {saved['id']}"
+        )
+
+    except Exception as e:
+
+        await update.message.reply_text(
+            "❌ Error al guardar la nota"
+        )
+
+        print("Error:", e)
+
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()

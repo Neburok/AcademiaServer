@@ -1,0 +1,16 @@
+{
+    "content": "Recuérdame la cita con el dentista el viernes a las 12 pm",
+    "type": "recordatorio",
+    "tags": [
+        "salud"
+    ],
+    "metadata": {
+        "event": "cita con el dentista",
+        "datetime": "2026-03-07T12:00:00"
+    },
+    "source": "test",
+    "id": "20260305-003",
+    "created_at": "2026-03-05T01:24:47.008044",
+    "title": "Recuérdame la cita con el dentista el viernes a las 12 pm",
+    "links": []
+}

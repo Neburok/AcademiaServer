@@ -7,6 +7,7 @@ import json
 from .models import Idea
 
 
+INBOX_DIR = "inbox"
 
 
 def ensure_inbox_directory():
@@ -25,36 +26,45 @@ def generate_daily_id():
     counter = len(daily_ids) + 1
     return f"{today_str}-{counter:03d}"
 
-import json
-from .models import Idea
+
+def generate_id():
+    today = datetime.now().strftime("%Y%m%d")
+
+    if not os.path.exists(INBOX_DIR):
+        os.makedirs(INBOX_DIR)
+
+    files = [f for f in os.listdir(INBOX_DIR) if f.startswith(today)]
+
+    counter = len(files) + 1
+
+    return f"{today}-{counter:03d}"
 
 
-def save_idea(title, content, tags=None, source="cli"):
-    if tags is None:
-        tags = []
+def save_idea(note: dict):
 
-    ensure_inbox_directory()
+    # Validación mínima
+    if "content" not in note:
+        raise ValueError("La nota debe contener 'content'")
 
-    idea_id = generate_daily_id()
+    idea_id = generate_id()
 
-    idea = Idea(
-        id=idea_id,
-        title=title,
-        content=content,
-        created_at=datetime.now(),
-        tags=tags,
-        source=source
-    )
+    note["id"] = idea_id
+    note["created_at"] = datetime.now().isoformat()
 
-    filename = f"{idea.id}.json"
-    filepath = os.path.join(INBOX_DIR, filename)
+    # valores por defecto
+    note.setdefault("type", "nota")
+    note.setdefault("title", note["content"][:60])
+    note.setdefault("tags", [])
+    note.setdefault("metadata", {})
+    note.setdefault("links", [])
+    note.setdefault("source", "unknown")
+
+    filepath = os.path.join(INBOX_DIR, f"{idea_id}.json")
 
     with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(idea.dict(), f, indent=4, default=str)
+        json.dump(note, f, ensure_ascii=False, indent=4)
 
-    log_event(f"Idea guardada: {idea.id}")
-
-    return idea
+    return note
 
 def list_ideas():
     if not os.path.exists(INBOX_DIR):
