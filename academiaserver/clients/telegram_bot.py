@@ -16,7 +16,7 @@ API_URL = os.getenv("API_URL")
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🤖 Jarvis Académico conectado.\nEnvíame una idea y la guardaré.")
 
-async def classify_message(text: str) -> str:
+def classify_message(text: str) -> str:
     text_lower = text.lower()
 
     if any(word in text_lower for word in ["acuérdame", "recuerdame", "recordar", "recuérdame"]):
@@ -49,7 +49,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("❌ Error al guardar la idea.")
 
-async def generate_title(text: str) -> str:
+def generate_title(text: str) -> str:
     words = text.split()
     return " ".join(words[:8])  # primeras 8 palabras
 

@@ -1,8 +1,10 @@
 {
     "id": "20260304-001",
-    "title": "Modelo nuevo",
-    "content": "Probando ID acad\u00e9mico",
-    "created_at": "2026-03-04 02:38:09.395142",
-    "tags": [],
-    "source": "cli"
+    "title": "Recu\u00e9rdame recordarte que hay que recordar el recordatorio",
+    "content": "Recu\u00e9rdame recordarte que hay que recordar el recordatorio",
+    "created_at": "2026-03-04 16:31:42.378782",
+    "tags": [
+        "recordatorio"
+    ],
+    "source": "api"
 }

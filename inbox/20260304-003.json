@@ -1,8 +1,10 @@
 {
     "id": "20260304-003",
-    "title": "string",
-    "content": "string",
-    "created_at": "2026-03-04 03:06:44.235308",
-    "tags": [],
+    "title": "La clase de hoy a las 6 de",
+    "content": "La clase de hoy a las 6 de la tarde sera sobre difraccion de rayos X",
+    "created_at": "2026-03-04 17:49:11.823340",
+    "tags": [
+        "nota"
+    ],
     "source": "api"
 }
