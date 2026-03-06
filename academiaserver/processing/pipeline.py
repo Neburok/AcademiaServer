@@ -18,8 +18,9 @@ def process_note(text: str, source="unknown"):
     if note_type == "recordatorio":
         reminder_data = parse_reminder(text)
 
-        if reminder_data:
-            note["metadata"].update(reminder_data)
+    if reminder_data:
+        note["metadata"].update(reminder_data)
+        note["metadata"]["reminded"] = False
 
     return note
 

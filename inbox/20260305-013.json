@@ -1,0 +1,14 @@
+{
+    "content": "Recuérdame en dos minutos",
+    "type": "recordatorio",
+    "title": "Recuérdame en dos minutos",
+    "tags": [],
+    "metadata": {
+        "datetime": "2026-03-05T00:00:00",
+        "reminded": true
+    },
+    "source": "telegram",
+    "id": "20260305-013",
+    "created_at": "2026-03-05T21:46:30.854049",
+    "links": []
+}

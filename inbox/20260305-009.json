@@ -1,0 +1,14 @@
+{
+    "content": "Recuérdame entregar los boletos a los alumnos",
+    "type": "recordatorio",
+    "title": "Recuérdame entregar los boletos a los alumnos",
+    "tags": [],
+    "metadata": {
+        "datetime": "2026-03-05T00:00:00",
+        "reminded": true
+    },
+    "source": "telegram",
+    "id": "20260305-009",
+    "created_at": "2026-03-05T19:12:22.674219",
+    "links": []
+}
