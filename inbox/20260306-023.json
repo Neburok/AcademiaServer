@@ -1,0 +1,31 @@
+{
+    "content": "Recuerdame ir por manzanas mañana",
+    "type": "recordatorio",
+    "title": "Ir a comprar manzanas",
+    "tags": [
+        "comprar",
+        "manzanas",
+        "supermercado"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Recordatorio para ir a comprar manzanas mañana.",
+            "priority": "baja",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2026-03-07T20:41:52.801558",
+        "reminded": false,
+        "needs_clarification": false,
+        "enrichment": {
+            "topics": [],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Recuerdame ir por manzanas mañana"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-023",
+    "created_at": "2026-03-06T20:41:52.836445"
+}

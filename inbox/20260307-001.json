@@ -1,0 +1,33 @@
+{
+    "content": "Mitzlia, recuerdame que el lunes tengo clases a las 17:00 de matemáticas, el tema sera de derivadas parciales . Hay que preparar la presentación",
+    "type": "recordatorio",
+    "title": "Preparar Presentación Derivadas",
+    "tags": [
+        "matematicas",
+        "derivadas",
+        "presentacion"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Recordatorio de preparación para presentación sobre derivadas parciales el lunes a las 17:00",
+            "priority": "alta",
+            "provider": "HybridProvider"
+        },
+        "datetime": "2026-03-09T17:00:00",
+        "reminded": false,
+        "needs_clarification": false,
+        "enrichment": {
+            "topics": [
+                "docencia"
+            ],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Mitzlia, recuerdame que el lunes tengo clases a las 17:00 de matemáticas, el tema sera de derivadas parciales . Hay"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260307-001",
+    "created_at": "2026-03-07T00:28:40.703366"
+}

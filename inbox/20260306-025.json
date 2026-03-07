@@ -1,0 +1,28 @@
+{
+    "content": "¿que pendientes tenemos para el lunes?",
+    "type": "tarea",
+    "title": "Revisar Presentación",
+    "tags": [
+        "proyecto",
+        "presentacion",
+        "reunion"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Revisar y finalizar la presentación para la reunión del martes.",
+            "priority": "alta",
+            "provider": "OllamaProvider"
+        },
+        "enrichment": {
+            "topics": [],
+            "priority": "media",
+            "entities": [],
+            "summary": "¿que pendientes tenemos para el lunes?"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-025",
+    "created_at": "2026-03-06T21:23:19.796150"
+}

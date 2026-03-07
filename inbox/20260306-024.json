@@ -1,0 +1,30 @@
+{
+    "content": "El lunes tenemos las clases de Matemáticas donde vamos a comenzar a trabajar con derivadas parciales",
+    "type": "tarea",
+    "title": "Matemáticas - Derivadas Parciales",
+    "tags": [
+        "matematicas",
+        "derivadas",
+        "parciales"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Estudiar para clase de derivadas parciales.",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "enrichment": {
+            "topics": [
+                "docencia"
+            ],
+            "priority": "baja",
+            "entities": [],
+            "summary": "El lunes tenemos las clases de Matemáticas donde vamos a comenzar a trabajar con derivadas parciales"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-024",
+    "created_at": "2026-03-06T21:14:58.917208"
+}

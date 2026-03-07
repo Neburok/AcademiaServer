@@ -1,0 +1,21 @@
+{
+    "content": "Mitzlia para el martes tenemos clase de caracterización de nanomateriales  a las 18:00 y de ingenieria de materiales a las 20:00",
+    "type": "nota",
+    "title": "Mitzlia para el martes tenemos clase de caracterización",
+    "tags": [],
+    "metadata": {
+        "enrichment": {
+            "topics": [
+                "docencia"
+            ],
+            "priority": "baja",
+            "entities": [],
+            "summary": "Mitzlia para el martes tenemos clase de caracterización de nanomateriales a las 18:00 y de ingenieria de materiales a las"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260307-003",
+    "created_at": "2026-03-07T00:36:03.408209"
+}

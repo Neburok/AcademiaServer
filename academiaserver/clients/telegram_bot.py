@@ -13,7 +13,10 @@ from telegram.ext import (
     filters,
 )
 
+from academiaserver.ai import AIOrchestrator, CloudProvider, HybridProvider, OllamaProvider
 from academiaserver.config import (
+    AI_CLOUD_ALLOW_SENSITIVE,
+    AI_ENABLE_CLOUD_FALLBACK,
     AI_HTTP_MAX_RETRIES,
     AI_HTTP_RETRY_DELAY_SECONDS,
     AI_MAX_RETRIES,
@@ -23,11 +26,13 @@ from academiaserver.config import (
     LOG_DIR,
     OLLAMA_BASE_URL,
     OLLAMA_CHAT_MODEL,
+    OPENAI_API_KEY,
+    OPENAI_BASE_URL,
+    OPENAI_CHAT_MODEL,
     REMINDER_MAX_RETRIES,
     REMINDER_RETRY_DELAY_SECONDS,
     SCHEDULER_INTERVAL_SECONDS,
 )
-from academiaserver.ai import AIOrchestrator, OllamaProvider
 from academiaserver.core import save_idea
 from academiaserver.logger import log_event
 from academiaserver.scheduler.reminders_scheduler import (
@@ -74,19 +79,62 @@ def validate_config():
 
 def build_orchestrator() -> AIOrchestrator:
     provider = None
+    local_provider = OllamaProvider(
+        base_url=OLLAMA_BASE_URL,
+        chat_model=OLLAMA_CHAT_MODEL,
+        timeout_seconds=AI_TIMEOUT_SECONDS,
+        http_max_retries=AI_HTTP_MAX_RETRIES,
+        http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
+    )
+
     if AI_PROVIDER == "ollama":
-        provider = OllamaProvider(
+        provider = local_provider
+        log_event(
+            "ai_provider_initialized",
+            provider="ollama",
+            model=OLLAMA_CHAT_MODEL,
             base_url=OLLAMA_BASE_URL,
-            chat_model=OLLAMA_CHAT_MODEL,
+        )
+    elif AI_PROVIDER == "cloud":
+        provider = CloudProvider(
+            api_key=OPENAI_API_KEY,
+            base_url=OPENAI_BASE_URL,
+            chat_model=OPENAI_CHAT_MODEL,
             timeout_seconds=AI_TIMEOUT_SECONDS,
             http_max_retries=AI_HTTP_MAX_RETRIES,
             http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
         )
         log_event(
             "ai_provider_initialized",
-            provider="ollama",
-            model=OLLAMA_CHAT_MODEL,
-            base_url=OLLAMA_BASE_URL,
+            provider="cloud",
+            model=OPENAI_CHAT_MODEL,
+            base_url=OPENAI_BASE_URL,
+        )
+    elif AI_PROVIDER == "hybrid":
+        cloud_provider = None
+        if OPENAI_API_KEY:
+            cloud_provider = CloudProvider(
+                api_key=OPENAI_API_KEY,
+                base_url=OPENAI_BASE_URL,
+                chat_model=OPENAI_CHAT_MODEL,
+                timeout_seconds=AI_TIMEOUT_SECONDS,
+                http_max_retries=AI_HTTP_MAX_RETRIES,
+                http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
+            )
+
+        provider = HybridProvider(
+            local_provider=local_provider,
+            cloud_provider=cloud_provider,
+            allow_cloud_fallback=AI_ENABLE_CLOUD_FALLBACK,
+            allow_sensitive_to_cloud=AI_CLOUD_ALLOW_SENSITIVE,
+        )
+        log_event(
+            "ai_provider_initialized",
+            provider="hybrid",
+            local_model=OLLAMA_CHAT_MODEL,
+            cloud_model=OPENAI_CHAT_MODEL if OPENAI_API_KEY else "not_configured",
+            cloud_fallback=AI_ENABLE_CLOUD_FALLBACK,
+            allow_sensitive_to_cloud=AI_CLOUD_ALLOW_SENSITIVE,
         )
     else:
         log_event("ai_provider_initialized", provider="rules")
@@ -98,6 +146,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Mitzlia conectado. Enviame una nota o recordatorio y lo guardare."
     )
+
+
+def is_pending_reminders_query(text: str) -> bool:
+    lowered = text.lower().strip()
+    normalized = unicodedata.normalize("NFD", lowered)
+    normalized = "".join(
+        ch for ch in normalized if unicodedata.category(ch) != "Mn"
+    )
+    normalized = re.sub(r"[^a-z0-9\s]", " ", normalized)
+    normalized = " ".join(normalized.split())
+
+    patterns = [
+        "que recordatorios tengo pendientes",
+        "recordatorios pendientes",
+        "recordatorios tengo",
+        "recordatorio pendiente",
+        "recordatorios por hacer",
+    ]
+    return any(pattern in normalized for pattern in patterns)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -188,26 +255,6 @@ async def scheduler_loop(application, chat_id: int):
                 mark_as_reminded(reminder)
 
         await asyncio.sleep(SCHEDULER_INTERVAL_SECONDS)
-
-
-def is_pending_reminders_query(text: str) -> bool:
-    lowered = text.lower().strip()
-    normalized = unicodedata.normalize("NFD", lowered)
-    normalized = "".join(
-        ch for ch in normalized if unicodedata.category(ch) != "Mn"
-    )
-    normalized = re.sub(r"[^a-z0-9\s]", " ", normalized)
-    normalized = " ".join(normalized.split())
-
-    patterns = [
-        "que recordatorios tengo pendientes",
-        "qué recordatorios tengo pendientes",
-        "recordatorios pendientes",
-        "recordatorios tengo",
-        "recordatorio pendiente",
-        "recordatorios por hacer",
-    ]
-    return any(pattern in normalized for pattern in patterns)
 
 
 def main():

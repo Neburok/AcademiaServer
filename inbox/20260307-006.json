@@ -1,0 +1,29 @@
+{
+    "content": "Mitzlia, ¿que clases tenemos el martes?",
+    "type": "pregunta",
+    "title": "Clases del martes",
+    "tags": [
+        "horario",
+        "agenda"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "",
+            "priority": "baja",
+            "provider": "HybridProvider"
+        },
+        "enrichment": {
+            "topics": [
+                "docencia"
+            ],
+            "priority": "baja",
+            "entities": [],
+            "summary": "Mitzlia, ¿que clases tenemos el martes?"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260307-006",
+    "created_at": "2026-03-07T00:39:38.627406"
+}
