@@ -1,0 +1,32 @@
+{
+    "content": "Recuérdame revisar el articulo",
+    "type": "recordatorio",
+    "title": "Revisar Artículo",
+    "tags": [
+        "artículo",
+        "revisar",
+        "estudio"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Revisar el artículo asignado.",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "needs_clarification": true,
+        "clarification_prompt": "Indica fecha y hora para el recordatorio, por ejemplo: 'mañana a las 18:30'.",
+        "enrichment": {
+            "topics": [
+                "investigacion"
+            ],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Recuérdame revisar el articulo"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-021",
+    "created_at": "2026-03-06T20:10:03.479759"
+}

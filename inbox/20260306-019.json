@@ -1,0 +1,30 @@
+{
+    "content": "Recuerdame a las 20:06",
+    "type": "recordatorio",
+    "title": "Recordatorio",
+    "tags": [
+        "recordatorio",
+        "tiempo"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "",
+            "priority": "baja",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2026-03-06T20:06:00",
+        "reminded": true,
+        "needs_clarification": false,
+        "enrichment": {
+            "topics": [],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Recuerdame a las 20:06"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-019",
+    "created_at": "2026-03-06T20:05:06.938907"
+}

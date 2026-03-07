@@ -1,0 +1,33 @@
+{
+    "content": "¿que recordatorios tengo pendientes?",
+    "type": "recordatorio",
+    "title": "Recordatorio de estudio",
+    "tags": [
+        "fisica",
+        "estudio",
+        "apuntes"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Revisar apuntes de la clase de física.",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2024-03-15T18:00:00",
+        "reminded": true,
+        "needs_clarification": false,
+        "enrichment": {
+            "topics": [
+                "agenda"
+            ],
+            "priority": "alta",
+            "entities": [],
+            "summary": "¿que recordatorios tengo pendientes?"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-020",
+    "created_at": "2026-03-06T20:07:43.493553"
+}

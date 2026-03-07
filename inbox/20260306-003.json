@@ -1,0 +1,14 @@
+{
+    "content": "Recuérdame que tengo q ir por el pollo mañana a las 10 am",
+    "type": "recordatorio",
+    "title": "Recuérdame que tengo q ir por el pollo",
+    "tags": [],
+    "metadata": {
+        "datetime": "2026-03-07T10:00:00",
+        "reminded": false
+    },
+    "source": "telegram",
+    "id": "20260306-003",
+    "created_at": "2026-03-06T10:00:20.476935",
+    "links": []
+}

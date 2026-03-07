@@ -1,0 +1,30 @@
+{
+    "content": "Idea para organizar notas de SEM por proyecto",
+    "type": "idea",
+    "title": "Organización Notas SEM",
+    "tags": [
+        "sem",
+        "organización",
+        "proyecto"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Crear una estructura de carpetas por proyecto y subcarpetas por tema dentro de cada proyecto. Usar nombres de archivo consistentes.",
+            "priority": "baja",
+            "provider": "OllamaProvider"
+        },
+        "enrichment": {
+            "topics": [
+                "sem"
+            ],
+            "priority": "media",
+            "entities": [],
+            "summary": "Idea para organizar notas de SEM por proyecto"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-014",
+    "created_at": "2026-03-06T19:34:05.093337"
+}

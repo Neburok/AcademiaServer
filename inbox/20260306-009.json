@@ -1,0 +1,31 @@
+{
+    "content": "Mitzlia, tengo una cita con el odontólogo el lunes 9 de marzo a las 10 am para una endodoncia. Recuerdame  a las 9 am",
+    "type": "recordatorio",
+    "title": "Endodoncia - Lunes 9 de Marzo",
+    "tags": [
+        "odontologo",
+        "endodoncia"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "",
+            "priority": "alta",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2024-03-09T09:00:00",
+        "reminded": true,
+        "enrichment": {
+            "topics": [
+                "agenda"
+            ],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Mitzlia, tengo una cita con el odontólogo el lunes 9 de marzo a las 10 am para una endodoncia. Recuerdame"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-009",
+    "created_at": "2026-03-06T17:36:03.216025"
+}

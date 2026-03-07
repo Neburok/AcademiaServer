@@ -1,0 +1,32 @@
+{
+    "content": "Mitzlia acuérdame que el lunes tengo clases a las 20 con el grupo INT25",
+    "type": "recordatorio",
+    "title": "Clases INT25 - Lunes 20:00",
+    "tags": [
+        "clases",
+        "int25",
+        "lunes"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2024-03-19T20:00:00",
+        "reminded": true,
+        "enrichment": {
+            "topics": [
+                "docencia"
+            ],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Mitzlia acuérdame que el lunes tengo clases a las 20 con el grupo INT25"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-012",
+    "created_at": "2026-03-06T17:44:21.321460"
+}

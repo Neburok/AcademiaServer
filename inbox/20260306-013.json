@@ -1,0 +1,28 @@
+{
+    "content": "revisar metodología de transferencia de calor",
+    "type": "idea",
+    "title": "Revisar Metodología de Transferencia de Calor",
+    "tags": [
+        "transferencia de calor",
+        "ingenieria termica",
+        "modelos matematicos"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Analizar los diferentes mecanismos de transferencia de calor (conducción, convección, radiación) y sus aplicaciones en sistemas de ingeniería. Investigar modelos matemáticos y simulaciones para optimizar diseños.",
+            "priority": "baja",
+            "provider": "OllamaProvider"
+        },
+        "enrichment": {
+            "topics": [],
+            "priority": "baja",
+            "entities": [],
+            "summary": "revisar metodología de transferencia de calor"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-013",
+    "created_at": "2026-03-06T19:33:24.761476"
+}

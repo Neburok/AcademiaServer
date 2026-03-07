@@ -1,0 +1,29 @@
+{
+    "content": "Recuerdame que tengo cosas que hacer el lunes 9 de amrzo a las 3 pm",
+    "type": "recordatorio",
+    "title": "Recordatorio de actividades",
+    "tags": [
+        "calendario",
+        "tareas"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Tienes tareas programadas para el lunes 9 de mayo a las 3 pm.",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2024-05-09T15:00:00",
+        "reminded": true,
+        "enrichment": {
+            "topics": [],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Recuerdame que tengo cosas que hacer el lunes 9 de amrzo a las 3 pm"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-008",
+    "created_at": "2026-03-06T17:34:24.701750"
+}

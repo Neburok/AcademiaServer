@@ -1,0 +1,30 @@
+{
+    "content": "Recuérdame a las 19:42 revisar el artículo",
+    "type": "recordatorio",
+    "title": "Revisar Artículo",
+    "tags": [
+        "revisar",
+        "artículo"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Revisar el artículo a las 19:42",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "datetime": "2024-03-08T19:42:00",
+        "reminded": true,
+        "needs_clarification": false,
+        "enrichment": {
+            "topics": [],
+            "priority": "alta",
+            "entities": [],
+            "summary": "Recuérdame a las 19:42 revisar el artículo"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-015",
+    "created_at": "2026-03-06T19:40:31.505639"
+}

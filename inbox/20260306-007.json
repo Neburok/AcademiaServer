@@ -1,0 +1,21 @@
+{
+    "content": "Recuérdeme la cita para una endodoncia el lunes 9 de marzo a las 10 am",
+    "type": "nota",
+    "title": "Recuérdeme la cita para una endodoncia el lunes",
+    "tags": [],
+    "metadata": {
+        "enrichment": {
+            "topics": [
+                "agenda"
+            ],
+            "priority": "baja",
+            "entities": [],
+            "summary": "Recuérdeme la cita para una endodoncia el lunes 9 de marzo a las 10 am"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-007",
+    "created_at": "2026-03-06T17:30:05.910874"
+}

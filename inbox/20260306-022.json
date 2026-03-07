@@ -1,0 +1,32 @@
+{
+    "content": "¿que recordatorios tengo pendientes?",
+    "type": "recordatorio",
+    "title": "Reunión con el equipo",
+    "tags": [
+        "reunion",
+        "equipo",
+        "proyecto"
+    ],
+    "metadata": {
+        "ai": {
+            "summary": "Recordatorio de la reunión con el equipo para discutir el proyecto.",
+            "priority": "media",
+            "provider": "OllamaProvider"
+        },
+        "needs_clarification": true,
+        "clarification_prompt": "Indica fecha y hora para el recordatorio, por ejemplo: 'mañana a las 18:30'.",
+        "enrichment": {
+            "topics": [
+                "agenda"
+            ],
+            "priority": "alta",
+            "entities": [],
+            "summary": "¿que recordatorios tengo pendientes?"
+        }
+    },
+    "source": "telegram",
+    "schema_version": "1.0.0",
+    "links": [],
+    "id": "20260306-022",
+    "created_at": "2026-03-06T20:13:46.588066"
+}

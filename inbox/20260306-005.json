@@ -1,0 +1,14 @@
+{
+    "content": "Recuérdame una cita a las 17:00 horas para material de diseño instruccional",
+    "type": "recordatorio",
+    "title": "Recuérdame una cita a las 17:00 horas para",
+    "tags": [],
+    "metadata": {
+        "datetime": "2026-03-06T17:00:00",
+        "reminded": true
+    },
+    "source": "telegram",
+    "id": "20260306-005",
+    "created_at": "2026-03-06T15:14:39.926811",
+    "links": []
+}
