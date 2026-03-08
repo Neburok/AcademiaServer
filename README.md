@@ -1,208 +1,334 @@
 # AcademiaServer
 
-Infraestructura para **Mitzlia**, un asistente cognitivo académico diseñado para amplificar la gestión del conocimiento personal.
-
-AcademiaServer proporciona la arquitectura base que permite capturar ideas, organizar conocimiento, ejecutar recordatorios y evolucionar gradualmente hacia un sistema académico asistido por inteligencia artificial.
+Infraestructura para **Mitzlia**, asistente cognitiva académica personal.
 
 ---
 
-# 🐈‍⬛ Mitzlia
+## Mitzlia
 
-**Mitzlia** es un asistente inteligente inspirado en *miztli*, el gato en la tradición náhuatl, símbolo de observación silenciosa, agilidad mental y sabiduría estratégica.
+**Mitzlia** toma su nombre de *miztli*, el gato en la tradición náhuatl — símbolo de observación silenciosa, agilidad mental y presencia estratégica.
 
-Al igual que el gato, Mitzlia observa, recuerda y actúa en el momento adecuado.
+Al igual que el gato, Mitzlia observa sin interrumpir, recuerda sin olvidar, y actúa cuando el momento lo requiere.
 
-Su objetivo es ayudar al usuario a:
+Su propósito es funcionar como un **segundo cerebro digital** para el trabajo académico:
 
-* capturar ideas rápidamente
-* organizar conocimiento académico
-* recordar eventos importantes
-* conectar conceptos y proyectos
-* transformar pensamientos en acciones útiles
+- capturar ideas en el momento en que aparecen
+- organizar conocimiento sin fricción
+- recordar compromisos antes de que se pierdan
+- conectar lo que se sabe con lo que se está pensando
+- amplificar el trabajo intelectual, no reemplazarlo
 
-Mitzlia funciona como un **segundo cerebro digital**, diseñado para acompañar procesos de investigación, docencia y producción intelectual.
-
-Más información en:
-
-MITZLIA.md
+Mitzlia no pretende ser un asistente genérico.
+Es una herramienta construida para un contexto específico: investigación, docencia y producción académica.
 
 ---
 
-# Visión
+## Estado actual — v0.1
 
-AcademiaServer es una infraestructura académica personal diseñada para apoyar de manera estructurada:
+La v0.1 establece la infraestructura completa y las primeras capacidades de inteligencia asistida.
 
-* investigación
-* docencia
-* escritura académica
-* experimentación con inteligencia artificial
+### Qué puede hacer hoy
 
-El proyecto busca evolucionar desde un sistema de captura de ideas hacia un **laboratorio digital académico autónomo**.
+- Recibir notas, ideas, tareas y recordatorios por Telegram
+- Clasificar y enriquecer cada nota con IA local (qwen3:8b)
+- Extraer entidades, temas y resumen semántico de cada nota
+- Recordar al Profesor compromisos pendientes en el momento exacto
+- Buscar notas por similitud semántica (no solo palabras clave)
+- Consultar su historial antes de responder — memoria activa (RAG)
+- Mantener contexto conversacional dentro de la misma sesión
+- Responder con voz propia, directa y sin relleno genérico
+- Exponer toda su funcionalidad vía API REST y CLI
 
-La filosofía de desarrollo prioriza:
+### Qué sabe Mitzlia sobre su usuario
 
-* estabilidad antes que complejidad
-* infraestructura antes que automatización
-* automatización antes que autonomía
-
----
-
-# Propósito del Sistema
-
-AcademiaServer no es simplemente una aplicación de notas ni un bot aislado.
-
-Funciona como:
-
-1. Inbox académico persistente
-2. Sistema estructurado de captura de conocimiento
-3. Pipeline de procesamiento de notas
-4. Motor de eventos y recordatorios
-5. Base para asistentes académicos inteligentes
-
-En conjunto, estos componentes conforman una **infraestructura cognitiva personal**.
+- Que es Profesor e investigador
+- Que trabaja con SEM, hipótesis, artículos y clases
+- Que el tiempo es limitado — las respuestas deben ser breves
+- Que la honestidad sobre los datos importa más que sonar segura
 
 ---
 
-# Estado Actual del Proyecto
+## Ecosistema de dispositivos
 
-Actualmente el sistema permite:
+Mitzlia está diseñada para acompañar al Profesor en tres contextos distintos con una sola memoria compartida:
 
-* Captura de ideas y notas desde Telegram
-* Interpretación básica de lenguaje natural
-* Estructuración automática de notas
-* Almacenamiento de conocimiento en formato JSON
-* Detección automática de recordatorios
-* Sistema de eventos basado en scheduler
-* Envío de notificaciones automáticas al usuario
+| Dispositivo | Ubicación | Uso principal con Mitzlia |
+|---|---|---|
+| `rubenpc` (GPU) | Casa — laboratorio personal | Servidor central. Corre Ollama, AcademiaServer y el scheduler 24/7. Trabajo profundo de investigación. |
+| Mini-PC oficina | Universidad — oficina | Preparar clases, seguimiento de proyectos, reuniones. Accede a `rubenpc` vía Tailscale. |
+| Laptop | Universidad — aula | Impartición de clases presenciales. Captura de ideas durante la clase. |
+| iPhone 12 | En movimiento | Captura rápida de ideas, notas de voz, recordatorios entre reuniones. Usa Telegram desde cualquier red. |
 
-Estas capacidades constituyen la primera versión funcional de **Mitzlia**.
-
----
-
-# Arquitectura General
-
-El sistema sigue una arquitectura modular basada en procesamiento de eventos.
-
-Flujo simplificado:
-
-Usuario
-↓
-Telegram
-↓
-Pipeline de procesamiento
-↓
-Base de conocimiento (JSON)
-↓
-Scheduler de eventos
-↓
-Acciones automáticas (recordatorios)
-
-Este enfoque permite separar claramente:
-
-* captura de información
-* procesamiento
-* almacenamiento
-* ejecución de acciones
+**Principio clave:** Ollama corre únicamente en `rubenpc` aprovechando la GPU. El resto de los dispositivos acceden a él a través de la red privada Tailscale — sin necesidad de instalar modelos localmente ni abrir puertos al internet público.
 
 ---
 
-# Estructura del Proyecto
+## Arquitectura
+
+El sistema sigue una arquitectura modular orientada a eventos:
+
+```
+Profesor (Telegram / CLI / FastAPI)
+  ↓
+Pipeline (clasificar + enriquecer + parsear recordatorios)
+  ↓
+Memoria activa — RAG (busca notas relevantes antes de responder)
+  ↓
+AI Orchestrator
+  ├── Ollama local  →  qwen3:8b   (chat)
+  │                    nomic-embed-text  (embeddings)
+  └── OpenAI cloud  →  fallback opcional
+  ↓
+Canonicalizar nota
+  ↓
+SQLite via SQLAlchemy  (academia.db)
+  ↓
+Bus de eventos pub/sub
+  ↓
+Logger  (logs/activity.log)
+
+Scheduler (proceso independiente, loop cada 60s)
+  ↓
+Consulta BD → Recordatorios vencidos → HTTP POST Telegram → Marca enviados
+```
+
+### Stack técnico
+
+| Capa | Tecnología |
+|---|---|
+| API REST | FastAPI + Uvicorn |
+| Bot | python-telegram-bot |
+| Base de datos | SQLite + SQLAlchemy + Alembic |
+| IA (chat) | Ollama — qwen3:8b |
+| IA (embeddings) | Ollama — nomic-embed-text (768 dims) |
+| Búsqueda semántica | Cosine similarity en Python puro |
+| Fallback cloud | OpenAI (opcional) |
+| Configuración | python-dotenv |
+
+### Módulos principales
 
 ```
 academiaserver/
-    core/              lógica central del sistema
-    processing/        pipeline de procesamiento de notas
-    scheduler/         motor de eventos y recordatorios
-    clients/           interfaces externas (Telegram, API)
-
-inbox/
-    base de conocimiento en formato JSON
-
-logs/
-    registro de actividad del sistema
-
-docs/
-    documentación técnica
+  api.py                  → FastAPI: /save, /list, /idea/{id}, /search, /digest/daily, /log
+  core.py                 → Lógica central: save, list, search, reembed, get_memory_context
+  config.py               → Toda la configuración desde .env
+  db/
+    database.py           → Engine SQLAlchemy, SessionLocal, Base
+    models.py             → ORM Nota (tabla notas)
+    repository.py         → Acceso a datos + funciones de embedding
+  ai/
+    embedding_provider.py → Genera vectores float32 via Ollama /api/embed
+    orchestrator.py       → Orquesta IA: reintentos, fallback, construcción de nota
+    prompts.py            → System prompt con personalidad de Mitzlia + fecha dinámica
+    contract.py           → Validación y normalización del JSON de salida
+    ollama_provider.py    → Provider local (qwen3:8b)
+    cloud_provider.py     → Provider cloud (OpenAI)
+    hybrid_provider.py    → Local primero, cloud como fallback
+  search/
+    semantic.py           → SemanticSearchEngine (cosine similarity)
+    keyword.py            → KeywordSearchEngine
+  processing/
+    pipeline.py           → Clasificación y enriquecimiento por reglas
+    enrichment.py         → Extrae topics/prioridad; no sobreescribe datos de IA
+    reminders.py          → Parser de fechas relativas
+  clients/
+    telegram_bot.py       → Bot: maneja mensajes, memoria activa, contexto conversacional
+  scheduler/
+    reminders_scheduler.py → Proceso independiente de recordatorios
+  events/
+    bus.py                → Bus pub/sub (singleton)
+  digest/                 → Generación de resumen diario
+migrations/               → Alembic: 0001_crear_tabla_notas, 0002_agregar_entidades
 ```
 
 ---
 
-# Filosofía Arquitectónica
+## Puesta en marcha
 
-El sistema está diseñado bajo los siguientes principios:
+### Requisitos
 
-Servidor ligero siempre activo
-Mini-PC como nodo central de procesamiento.
+- Python 3.12+
+- [Ollama](https://ollama.com) instalado y corriendo
+- Token de bot de Telegram (`@BotFather`)
+- (Opcional) API key de OpenAI para fallback cloud
 
-Modularidad
-Los componentes se desarrollan como módulos independientes.
+### Modelos necesarios
 
-Separación entre datos y lógica
-El conocimiento se almacena como datos estructurados.
+```bash
+ollama pull qwen3:8b
+ollama pull nomic-embed-text
+```
 
-Control de versiones
-Todo el sistema evoluciona bajo control de Git.
+### Instalación
 
-Evolución incremental
-Cada nueva capacidad se construye sobre una base estable.
+```bash
+pip install -r requirements.txt
+cp .env.example .env   # editar con tus valores
+alembic upgrade head   # inicializar base de datos
+```
 
----
+### Ejecutar los procesos
 
-# Roadmap del Proyecto
+Cada componente es un proceso independiente:
 
-## Fase 1 – Infraestructura Fundacional
+```bash
+# API REST
+uvicorn academiaserver.api:app --host 0.0.0.0 --port 8000 --reload
 
-* estructura del repositorio
-* sistema de registro
-* captura básica de ideas
-* almacenamiento estructurado
+# Bot de Telegram
+python -m academiaserver.clients.telegram_bot
 
-## Fase 2 – Automatización
+# Scheduler de recordatorios
+python run_scheduler.py
+```
 
-* clasificación de notas
-* pipeline de procesamiento
-* scheduler de recordatorios
-* integración con Telegram
+### CLI
 
-## Fase 3 – Inteligencia Asistida
+```bash
+python main.py save --content "..."          # guardar nota
+python main.py list                          # listar notas
+python main.py get --id 20260308-001         # obtener nota por ID
+python main.py search "SEM" --backend semantic   # búsqueda semántica
+python main.py search "clase" --backend keyword  # búsqueda por palabras
+python main.py reembed                       # generar embeddings para notas sin vector
+python main.py digest                        # resumen del día
+```
 
-* enriquecimiento semántico de notas
-* búsqueda avanzada de conocimiento
-* generación de resúmenes
+### Migraciones de base de datos
 
-## Fase 4 – Asistente Cognitivo
+```bash
+alembic upgrade head              # aplicar todas las migraciones
+alembic revision --autogenerate -m "descripcion"  # nueva migración tras cambiar models.py
+alembic downgrade -1              # revertir última migración
+```
 
-* análisis de relaciones entre ideas
-* organización automática de proyectos
-* asistencia en investigación académica
+### Tests
 
-## Fase 5 – Laboratorio de IA
-
-* agentes académicos especializados
-* experimentación con modelos de lenguaje
-* automatización avanzada de flujos de trabajo
-
----
-
-# Objetivo a Largo Plazo
-
-Evolucionar AcademiaServer hacia un **laboratorio cognitivo académico**, donde Mitzlia funcione como un asistente capaz de:
-
-* organizar conocimiento académico
-* relacionar ideas y proyectos
-* asistir procesos de investigación
-* apoyar desarrollo curricular
-* colaborar en escritura académica
-* facilitar experimentación con inteligencia artificial
-
-Mitzlia no pretende reemplazar el pensamiento humano.
-
-Su propósito es **amplificarlo**.
+```bash
+pytest                            # todos los tests
+pytest tests/test_embeddings.py  # un archivo específico
+pytest tests/ -v                 # con detalle
+```
 
 ---
 
-# Principio Fundamental
+## Variables de configuración (.env)
 
-- Mitzlia observa.
-- Mitzlia recuerda.
-- Mitzlia actúa cuando es necesario.
+```env
+# Base de datos
+DB_PATH=academia.db
+
+# Telegram
+TELEGRAM_TOKEN=
+TELEGRAM_CHAT_ID=
+
+# IA — Ollama
+AI_PROVIDER=ollama               # ollama | cloud | hybrid
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_CHAT_MODEL=qwen3:8b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+
+# IA — OpenAI (fallback opcional)
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+AI_ENABLE_CLOUD_FALLBACK=false
+AI_CLOUD_ALLOW_SENSITIVE=false
+
+# Scheduler
+SCHEDULER_INTERVAL_SECONDS=60
+
+# Servidor
+LOG_DIR=logs
+```
+
+---
+
+## Filosofía de desarrollo
+
+**Estabilidad antes que complejidad.**
+Cada nueva capacidad se construye sobre una base que ya funciona.
+
+**Infraestructura antes que automatización.**
+No automatizar lo que no está bien estructurado.
+
+**Automatización antes que autonomía.**
+No dar autonomía a lo que no está bien automatizado.
+
+**Honestidad sobre los datos.**
+Mitzlia solo afirma lo que está en las notas. Nunca inventa.
+
+---
+
+## Roadmap
+
+### v0.1 — Infraestructura + Inteligencia asistida ✅
+- SQLite + Alembic, bus de eventos, scheduler desacoplado
+- Embeddings vectoriales y búsqueda semántica
+- Enriquecimiento real con qwen3:8b (entidades, topics, resumen)
+- Contexto conversacional por sesión (últimos 5 mensajes)
+- Memoria activa RAG (historial relevante antes de cada respuesta)
+- Personalidad de Mitzlia: directa, honesta, conoce el contexto académico
+
+### v0.2 — Despliegue permanente (Tailscale)
+`rubenpc` se convierte en el servidor central de Mitzlia, accesible desde cualquier dispositivo del ecosistema a través de la red privada Tailscale — sin exponer puertos al internet público.
+
+La red ya existe. Lo que falta es formalizar el despliegue:
+
+- `.env.example` documentado para cada contexto (rubenpc, oficina, laptop)
+- Scripts de arranque automático para los tres procesos en rubenpc (API, bot, scheduler)
+- `OLLAMA_BASE_URL` configurado con la IP Tailscale de rubenpc en los equipos que no tienen GPU
+- Acceso a la API REST desde mini-PC de oficina, laptop del aula y iPhone vía Tailscale
+- Guía de configuración por dispositivo
+
+Con esto, el Profesor escribe desde el aula, la oficina o el teléfono — Mitzlia siempre responde desde `rubenpc`.
+
+### v0.3 — Voz
+El Profesor puede enviar notas de voz desde Telegram. Mitzlia las transcribe con Whisper local en `rubenpc` y las procesa igual que texto.
+
+Caso de uso central: capturar ideas durante una clase presencial sin interrumpir el flujo, o dictar una nota caminando entre edificios.
+
+- Integración de Whisper (transcripción local en rubenpc, audio nunca sale a la nube)
+- Pipeline: nota de voz → texto → clasificación → nota/recordatorio
+- Compatible con todos los dispositivos: iPhone, laptop del aula, mini-PC
+- Sin cambios en la interfaz: el Profesor habla, Mitzlia captura
+
+### v0.4 — Memoria profunda
+Mitzlia detecta y verbaliza conexiones entre notas capturadas en distintos momentos y contextos — lo que se pensó en el laboratorio, lo que surgió en clase, lo que se anotó en una reunión de oficina.
+
+- Grafo de ideas: notas relacionadas entre sí por similitud semántica
+- Mitzlia puede decir: "Esto conecta con lo que guardó sobre el Dr. García la semana pasada"
+- Agrupamiento automático por proyecto o tema activo, independientemente del dispositivo de origen
+- Vista de "hilos": secuencias de notas relacionadas en el tiempo
+- Detección de proyectos sin actividad reciente: "Profesor, no ha registrado nada sobre el artículo SEM en dos semanas"
+
+### v0.5 — Escritura asistida
+Mitzlia ayuda a convertir notas en texto académico.
+
+- Síntesis de múltiples notas en un borrador estructurado
+- Generación de secciones de artículos o reportes a partir del historial
+- Exportación a Markdown y LaTeX
+- Sugerencias de estructura para artículos o presentaciones
+
+### v0.6 — Agentes especializados
+Mitzlia delega tareas a agentes con conocimiento específico.
+
+- Agente de investigación: busca en fuentes académicas externas
+- Agente de docencia: organiza material de cursos a partir de notas
+- Agente de escritura: revisa y sugiere mejoras en borradores
+
+### v1.0 — Laboratorio cognitivo
+Mitzlia actúa de forma semi-autónoma sobre el conocimiento del Profesor.
+
+- Propone conexiones y acciones sin que el Profesor pregunte
+- Identifica proyectos sin avance y pregunta si siguen activos
+- Multi-dispositivo coordinado: misma memoria desde cualquier equipo
+- Posible integración con Obsidian, Zotero u otras herramientas académicas
+
+---
+
+## Principio fundamental
+
+Mitzlia observa.
+Mitzlia recuerda.
+Mitzlia actúa cuando es necesario.
