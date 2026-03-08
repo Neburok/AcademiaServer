@@ -51,27 +51,22 @@ class TelegramBotTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sent)
         self.assertEqual(fake_bot.calls, telegram_bot.REMINDER_MAX_RETRIES)
 
-    def test_validate_config_valida_rutas(self):
-        temp_inbox = tempfile.mkdtemp(prefix="inbox_")
+    def test_validate_config_valida_directorio_logs(self):
         temp_logs = tempfile.mkdtemp(prefix="logs_")
 
         original_token = telegram_bot.TOKEN
         original_chat = telegram_bot.CHAT_ID_ENV
-        original_inbox = telegram_bot.INBOX_DIR
         original_logs = telegram_bot.LOG_DIR
 
         try:
             telegram_bot.TOKEN = "token_prueba"
             telegram_bot.CHAT_ID_ENV = "123456"
-            telegram_bot.INBOX_DIR = temp_inbox
             telegram_bot.LOG_DIR = temp_logs
             telegram_bot.validate_config()
         finally:
             telegram_bot.TOKEN = original_token
             telegram_bot.CHAT_ID_ENV = original_chat
-            telegram_bot.INBOX_DIR = original_inbox
             telegram_bot.LOG_DIR = original_logs
-            shutil.rmtree(temp_inbox, ignore_errors=True)
             shutil.rmtree(temp_logs, ignore_errors=True)
 
     def test_detecta_consulta_de_recordatorios_pendientes(self):

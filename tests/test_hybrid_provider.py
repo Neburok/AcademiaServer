@@ -4,12 +4,12 @@ from academiaserver.ai.hybrid_provider import HybridProvider
 
 
 class ProviderOk:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         return {"note_type": "nota", "title": "ok"}
 
 
 class ProviderFail:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         raise RuntimeError("fallo")
 
 

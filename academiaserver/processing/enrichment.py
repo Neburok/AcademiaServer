@@ -31,8 +31,15 @@ def enrich_note_metadata(note: dict) -> dict:
     content = note.get("content", "")
     note_type = note.get("type", "nota")
 
-    enrichment["topics"] = extract_topics(content)
-    enrichment["priority"] = infer_priority(content, note_type)
-    enrichment["entities"] = []
-    enrichment["summary"] = " ".join(content.split()[:20])
+    # Solo rellenar con reglas los campos que la IA no haya poblado
+    if not enrichment.get("topics"):
+        enrichment["topics"] = extract_topics(content)
+    if not enrichment.get("priority"):
+        enrichment["priority"] = infer_priority(content, note_type)
+    # entities y summary: solo se rellenan si vienen de IA; no hay fallback por reglas
+    if "entities" not in enrichment:
+        enrichment["entities"] = []
+    if "summary" not in enrichment:
+        enrichment["summary"] = " ".join(content.split()[:20])
+
     return note

@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+
+_MAX_FUTURE_DAYS = 365  # fechas más allá de 1 año se tratan como error de parseo
 
 from academiaserver.ai.contract import validate_ai_analysis
 from academiaserver.ai.replies import build_contextual_reply
@@ -14,14 +16,20 @@ class AIOrchestrator:
         self.provider = provider
         self.ai_max_retries = max(1, ai_max_retries)
 
-    def process_message(self, text: str, source: str = "telegram"):
+    def process_message(
+        self,
+        text: str,
+        source: str = "telegram",
+        context: list[str] = [],
+        memory: list[dict] = [],
+    ):
         if not self.provider:
             return self._fallback_rules(text, source, reason="ai_disabled")
 
         last_error = None
         for attempt in range(1, self.ai_max_retries + 1):
             try:
-                raw_analysis = self.provider.analyze_message(text)
+                raw_analysis = self.provider.analyze_message(text, context=context, memory=memory)
                 analysis = validate_ai_analysis(raw_analysis)
                 note = self._build_note_from_ai(text=text, source=source, analysis=analysis)
                 reply_text = self._build_reply(note=note, ai_reply=analysis.get("reply_text"))
@@ -53,11 +61,15 @@ class AIOrchestrator:
             "title": (analysis.get("title") or text[:60]).strip(),
             "tags": analysis.get("tags") or [],
             "metadata": {
-                "ai": {
-                    "summary": analysis.get("summary", ""),
+                "enrichment": {
+                    "topics":   analysis.get("topics", []),
+                    "entities": analysis.get("entities", []),
+                    "summary":  analysis.get("summary", ""),
                     "priority": analysis.get("priority", "media"),
+                },
+                "ai": {
                     "provider": self.provider.__class__.__name__,
-                }
+                },
             },
             "source": source,
         }
@@ -67,13 +79,23 @@ class AIOrchestrator:
             if dt:
                 try:
                     parsed_dt = datetime.fromisoformat(dt)
-                    if parsed_dt < datetime.now():
+                    now = datetime.now()
+                    if parsed_dt < now:
                         dt = None
                         log_event(
                             "ai_datetime_past_ignored",
                             level="WARNING",
                             source=source,
                             ai_datetime=analysis.get("datetime"),
+                        )
+                    elif parsed_dt > now + timedelta(days=_MAX_FUTURE_DAYS):
+                        dt = None
+                        log_event(
+                            "ai_datetime_far_future_ignored",
+                            level="WARNING",
+                            source=source,
+                            ai_datetime=analysis.get("datetime"),
+                            max_days=_MAX_FUTURE_DAYS,
                         )
                 except ValueError:
                     dt = None
@@ -91,8 +113,8 @@ class AIOrchestrator:
                 else:
                     note["metadata"]["needs_clarification"] = True
                     note["metadata"]["clarification_prompt"] = (
-                        "Indica fecha y hora para el recordatorio, por ejemplo: "
-                        "'mañana a las 18:30'."
+                        "¿Cuándo, Profesor? Dígame fecha y hora, "
+                        "por ejemplo: 'mañana a las 18:30'."
                     )
 
         note = canonicalize_note(note)
@@ -114,8 +136,7 @@ class AIOrchestrator:
         metadata = note.get("metadata", {})
         if metadata.get("needs_clarification") is True:
             return metadata.get("clarification_prompt") or (
-                "Falta fecha/hora para el recordatorio. "
-                "Indica algo como: mañana a las 18:30."
+                "¿Cuándo, Profesor? Necesito fecha y hora para el recordatorio."
             )
 
         if ai_reply:

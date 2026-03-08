@@ -15,9 +15,9 @@ class HybridProvider(AIProvider):
         self.allow_cloud_fallback = allow_cloud_fallback
         self.allow_sensitive_to_cloud = allow_sensitive_to_cloud
 
-    def analyze_message(self, text: str) -> dict:
+    def analyze_message(self, text: str, context: list[str] = [], memory: list[dict] = []) -> dict:
         try:
-            return self.local_provider.analyze_message(text)
+            return self.local_provider.analyze_message(text, context=context, memory=memory)
         except Exception as local_error:
             if not self.allow_cloud_fallback:
                 raise RuntimeError(f"Local fallo y fallback cloud desactivado: {local_error}")
@@ -32,4 +32,4 @@ class HybridProvider(AIProvider):
                     "Mensaje sensible detectado; no se permite enviar a proveedor cloud"
                 )
 
-            return self.cloud_provider.analyze_message(text)
+            return self.cloud_provider.analyze_message(text, context=context, memory=memory)

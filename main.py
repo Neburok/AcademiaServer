@@ -4,6 +4,7 @@ from academiaserver.core import (
     get_daily_digest,
     get_idea_by_id,
     list_ideas,
+    reembed_notas,
     save_idea,
     search_ideas,
 )
@@ -34,6 +35,7 @@ def main():
     subparsers.add_parser("list", help="Listar archivos de notas")
     subparsers.add_parser("log", help="Mostrar logs")
     subparsers.add_parser("digest", help="Generar digest diario")
+    subparsers.add_parser("reembed", help="Generar embeddings para notas sin vector")
 
     args = parser.parse_args()
 
@@ -49,7 +51,7 @@ def main():
             print("No hay ideas guardadas.")
         else:
             for idea in ideas:
-                print(idea)
+                print(f"{idea['id']} - {idea.get('title', '(sin título)')}")
     elif args.command == "log":
         logs = show_logs()
         print(logs if logs else "No hay logs aun.")
@@ -66,6 +68,13 @@ def main():
     elif args.command == "digest":
         digest = get_daily_digest()
         print(digest["text"])
+    elif args.command == "reembed":
+        print("Generando embeddings para notas sin vector...")
+        stats = reembed_notas()
+        print(f"Total pendientes: {stats['total']}")
+        print(f"Procesadas:       {stats['procesadas']}")
+        if stats["fallidas"]:
+            print(f"Fallidas (Ollama no disponible): {stats['fallidas']}")
     else:
         parser.print_help()
 

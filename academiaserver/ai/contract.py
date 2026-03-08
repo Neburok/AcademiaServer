@@ -27,6 +27,34 @@ def _normalize_tags(tags):
     return normalized[:5]
 
 
+def _normalize_entities(entities):
+    """Normaliza la lista de entidades: strings no vacíos, máximo 8."""
+    if entities is None:
+        return []
+    if not isinstance(entities, list):
+        return []
+    normalized = []
+    for e in entities:
+        text = _as_text(e)
+        if text and text not in normalized:
+            normalized.append(text)
+    return normalized[:8]
+
+
+def _normalize_topics(topics):
+    """Normaliza la lista de topics: minúsculas, máximo 5."""
+    if topics is None:
+        return []
+    if not isinstance(topics, list):
+        return []
+    normalized = []
+    for t in topics:
+        text = _as_text(t).lower()
+        if text and text not in normalized:
+            normalized.append(text)
+    return normalized[:5]
+
+
 def _validate_datetime(value):
     if value in (None, "", "null"):
         return None
@@ -69,5 +97,7 @@ def validate_ai_analysis(analysis: dict) -> dict:
         "priority": priority,
         "datetime": _validate_datetime(analysis.get("datetime")),
         "reply_text": reply_text,
+        "entities": _normalize_entities(analysis.get("entities")),
+        "topics": _normalize_topics(analysis.get("topics")),
     }
     return normalized

@@ -1,4 +1,13 @@
 __pycache__/
+*.pyc
 *.log
 .env
 venv/
+.venv/
+
+# Base de datos local (generada en tiempo de ejecución)
+*.db
+
+# Caché de pytest y mypy
+.pytest_cache/
+.mypy_cache/

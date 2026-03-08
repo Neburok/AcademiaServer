@@ -27,11 +27,11 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["id"], "1")
 
-    def test_semantic_backend_preparado_pero_no_implementado(self):
-        notes = []
-        service = SearchService(backend="semantic")
-        with self.assertRaises(NotImplementedError):
-            service.search(notes, "prueba")
+    def test_semantic_backend_no_soportado_en_search_service(self):
+        # La búsqueda semántica se maneja en core.search_ideas(), no en SearchService.
+        # SearchService levanta ValueError si se solicita backend "semantic" directamente.
+        with self.assertRaises(ValueError):
+            SearchService(backend="semantic")
 
 
 if __name__ == "__main__":

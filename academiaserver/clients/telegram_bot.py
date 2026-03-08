@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import unicodedata
+from collections import deque
 
 from dotenv import load_dotenv
 from telegram import Update
@@ -22,7 +23,6 @@ from academiaserver.config import (
     AI_MAX_RETRIES,
     AI_PROVIDER,
     AI_TIMEOUT_SECONDS,
-    INBOX_DIR,
     LOG_DIR,
     OLLAMA_BASE_URL,
     OLLAMA_CHAT_MODEL,
@@ -33,18 +33,17 @@ from academiaserver.config import (
     REMINDER_RETRY_DELAY_SECONDS,
     SCHEDULER_INTERVAL_SECONDS,
 )
-from academiaserver.core import save_idea
+from academiaserver.core import get_memory_context, save_idea
 from academiaserver.logger import log_event
-from academiaserver.scheduler.reminders_scheduler import (
-    get_due_reminders,
-    get_pending_reminders,
-    mark_as_reminded,
-)
+from academiaserver.scheduler.reminders_scheduler import get_pending_reminders
 
 load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID_ENV = os.getenv("TELEGRAM_CHAT_ID")
+
+# Contexto conversacional por chat: últimos 5 mensajes del usuario
+_chat_contexts: dict[int, deque] = {}
 
 
 def get_chat_id() -> int:
@@ -66,11 +65,9 @@ def validate_config():
     if not TOKEN:
         raise RuntimeError("Falta TELEGRAM_TOKEN en variables de entorno")
     get_chat_id()
-    ensure_writable_dir(INBOX_DIR, "INBOX_DIR")
     ensure_writable_dir(LOG_DIR, "LOG_DIR")
     log_event(
         "bot_startup_validation_ok",
-        inbox_dir=INBOX_DIR,
         log_dir=LOG_DIR,
         scheduler_interval=SCHEDULER_INTERVAL_SECONDS,
         ai_provider=AI_PROVIDER,
@@ -144,7 +141,7 @@ def build_orchestrator() -> AIOrchestrator:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Mitzlia conectado. Enviame una nota o recordatorio y lo guardare."
+        "Aquí, Profesor. Dígame — notas, ideas, recordatorios. Lo que necesite."
     )
 
 
@@ -170,20 +167,21 @@ def is_pending_reminders_query(text: str) -> bool:
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (update.message.text or "").strip()
     if not text:
-        await update.message.reply_text("No recibi texto para procesar.")
+        await update.message.reply_text("No recibí texto, Profesor.")
         return
 
     if is_pending_reminders_query(text):
         log_event("bot_pending_reminders_query_detected")
         pending = get_pending_reminders(limit=5)
         if not pending:
-            await update.message.reply_text("No tienes recordatorios pendientes.")
+            await update.message.reply_text("Sin pendientes por ahora, Profesor.")
             return
 
-        lines = ["Tus recordatorios pendientes:"]
+        lines = ["Pendientes, Profesor:"]
         for reminder in pending:
             dt = reminder.get("metadata", {}).get("datetime", "sin fecha")
-            lines.append(f"- {dt}: {reminder.get('content', '')}")
+            titulo = reminder.get("title") or reminder.get("content", "")[:60]
+            lines.append(f"- {dt}: {titulo}")
 
         await update.message.reply_text("\n".join(lines))
         return
@@ -194,7 +192,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             orchestrator = build_orchestrator()
             context.application.bot_data["ai_orchestrator"] = orchestrator
 
-        note, reply_text = orchestrator.process_message(text, source="telegram")
+        chat_id = update.message.chat_id
+        ctx = list(_chat_contexts.get(chat_id, []))
+        memory = get_memory_context(text, top_k=5)
+        note, reply_text = orchestrator.process_message(
+            text, source="telegram", context=ctx, memory=memory
+        )
+        _chat_contexts.setdefault(chat_id, deque(maxlen=5)).append(text)
+
+        # Las preguntas no se guardan — se responden con notas reales del historial
+        if note.get("type") == "pregunta":
+            log_event("bot_question_handled", source="telegram")
+            if memory:
+                lines = ["Lo que tengo registrado, Profesor:"]
+                for m in memory:
+                    fecha = (m.get("created_at") or "")[:10]
+                    titulo = m.get("title") or m.get("content", "")[:60]
+                    resumen = m.get("metadata", {}).get("enrichment", {}).get("summary", "")
+                    linea = f"- [{fecha}] {titulo}"
+                    if resumen:
+                        linea += f"\n  {resumen[:120]}"
+                    lines.append(linea)
+                await update.message.reply_text("\n".join(lines))
+            else:
+                await update.message.reply_text(
+                    "No tengo nada registrado sobre eso, Profesor."
+                )
+            return
+
         saved = save_idea(note)
         log_event(
             "bot_note_saved",
@@ -205,7 +230,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{reply_text}\nID: {saved['id']}")
     except Exception as exc:
         log_event("bot_note_save_error", level="ERROR", error=str(exc))
-        await update.message.reply_text("Error al guardar la nota.")
+        await update.message.reply_text("Algo falló al guardar, Profesor. Intente de nuevo.")
 
 
 async def send_reminder_with_retry(application, chat_id: int, message: str, reminder_id: str):
@@ -238,33 +263,12 @@ async def send_reminder_with_retry(application, chat_id: int, message: str, remi
     return False
 
 
-async def scheduler_loop(application, chat_id: int):
-    log_event("bot_scheduler_loop_started")
-    while True:
-        reminders = get_due_reminders()
-        for reminder in reminders:
-            reminder_id = reminder.get("id", "sin_id")
-            message = f"Recordatorio:\n{reminder['content']}"
-            sent = await send_reminder_with_retry(
-                application,
-                chat_id=chat_id,
-                message=message,
-                reminder_id=reminder_id,
-            )
-            if sent:
-                mark_as_reminded(reminder)
-
-        await asyncio.sleep(SCHEDULER_INTERVAL_SECONDS)
-
-
 def main():
     validate_config()
-    chat_id = get_chat_id()
     orchestrator = build_orchestrator()
 
     async def post_init(application):
         application.bot_data["ai_orchestrator"] = orchestrator
-        application.create_task(scheduler_loop(application, chat_id))
 
     application = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
     application.add_handler(CommandHandler("start", start))

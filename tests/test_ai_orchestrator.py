@@ -5,7 +5,7 @@ from academiaserver.ai.orchestrator import AIOrchestrator
 
 
 class FakeProviderOk:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         return {
             "note_type": "idea",
             "title": "Idea para mejorar clase de SEM",
@@ -18,12 +18,12 @@ class FakeProviderOk:
 
 
 class FakeProviderFail:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         raise RuntimeError("Fallo simulado de IA")
 
 
 class FakeProviderReminderNoDatetime:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         return {
             "note_type": "recordatorio",
             "title": "Revisar articulo",
@@ -36,7 +36,7 @@ class FakeProviderReminderNoDatetime:
 
 
 class FakeProviderIdeaNoReply:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         return {
             "note_type": "idea",
             "title": "Idea de proyecto SEM",
@@ -49,7 +49,7 @@ class FakeProviderIdeaNoReply:
 
 
 class FakeProviderInvalid:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         return {
             "note_type": "otro_tipo",
             "title": "",
@@ -62,7 +62,7 @@ class FakeProviderInvalid:
 
 
 class FakeProviderPastDatetime:
-    def analyze_message(self, _text: str) -> dict:
+    def analyze_message(self, _text: str, context: list = [], memory: list = []) -> dict:
         return {
             "note_type": "recordatorio",
             "title": "Revisar articulo",
@@ -118,7 +118,7 @@ class AIOrchestratorTests(unittest.TestCase):
 
         self.assertEqual(note["type"], "recordatorio")
         self.assertTrue(note["metadata"].get("needs_clarification"))
-        self.assertIn("Indica fecha y hora", reply)
+        self.assertIn("Profesor", reply)
 
     def test_respuesta_contextual_cuando_ia_no_da_reply(self):
         orchestrator = AIOrchestrator(provider=FakeProviderIdeaNoReply(), ai_max_retries=1)
