@@ -39,7 +39,7 @@ Tipos permitidos:
 Reglas tecnicas:
 1) Devuelve unicamente un JSON sin texto extra.
 2) title debe ser corto (maximo 60 caracteres).
-3) reply_text: maximo 220 caracteres. Confirma con tu voz propia. Agrega una observacion o pregunta solo si genuinamente vale la pena. Sin relleno.
+3) reply_text: maximo 600 caracteres. Confirma con tu voz propia. Si el tipo es "pregunta", responde directamente usando el contenido de las notas del historial. Agrega una observacion o pregunta solo si genuinamente vale la pena. Sin relleno.
 4) Si no hay fecha/hora clara para recordatorio usa datetime: null.
 5) tags debe ser lista de 0 a 5 elementos en minusculas.
 6) priority solo puede ser: baja, media, alta.
@@ -88,16 +88,28 @@ def build_user_message(
         for n in memory:
             fecha = (n.get("created_at") or "")[:10]
             titulo = n.get("title") or ""
+            contenido = n.get("content", "").strip()
             resumen = n.get("metadata", {}).get("enrichment", {}).get("summary", "")
             linea = f"- [{fecha}] {titulo}"
-            if resumen:
+            # Incluir contenido completo para que la IA pueda responder preguntas
+            if contenido and contenido != titulo:
+                linea += f"\n  {contenido[:300]}"
+            elif resumen:
                 linea += f" — {resumen[:100]}"
             mem_lines.append(linea)
         parts.append("Notas relevantes del historial del Profesor:\n" + "\n".join(mem_lines))
 
     if context:
-        ctx = "\n".join(f"- {m}" for m in context[-5:])
-        parts.append(f"Contexto conversacional previo:\n{ctx}")
+        ctx_lines = []
+        for m in context[-5:]:
+            if isinstance(m, dict):
+                ctx_lines.append(f"Profesor: {m.get('user', '')}")
+                if m.get("assistant"):
+                    ctx_lines.append(f"Mitzlia: {m.get('assistant', '')}")
+            else:
+                # Compatibilidad con entradas antiguas tipo string
+                ctx_lines.append(f"Profesor: {m}")
+        parts.append("Conversación previa:\n" + "\n".join(ctx_lines))
 
     parts.append(f"Mensaje actual:\n{text}")
     return "\n\n".join(parts)

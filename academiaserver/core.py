@@ -127,3 +127,44 @@ def get_memory_context(query: str, top_k: int = 3) -> list[dict]:
 
     engine = SemanticSearchEngine(_embedding_provider)
     return engine.search(notes_with_embeddings, query, top_k=top_k)
+
+
+def find_related_notes(
+    content: str,
+    exclude_id: str | None = None,
+    top_k: int = 3,
+    min_score: float = 0.60,
+) -> list[dict]:
+    """
+    Encuentra notas semánticamente relacionadas con un contenido dado.
+
+    Diseñado para Fase 4 — conexiones automáticas al guardar notas:
+    Mitzlia puede avisar al Profesor cuando una nota nueva conecta
+    con material previo relevante en el historial.
+
+    - min_score: umbral de similitud coseno. 0.60 filtra conexiones débiles
+      y solo muestra relaciones genuinas entre notas.
+    - exclude_id: ID de la nota recién guardada, para no incluirla en resultados.
+    - Degradación suave: retorna [] si Ollama no está disponible o no hay embeddings.
+    """
+    db = _db.SessionLocal()
+    try:
+        notes_with_embeddings = repository.get_all_with_embeddings(db)
+    finally:
+        db.close()
+
+    if not notes_with_embeddings:
+        return []
+
+    engine = SemanticSearchEngine(_embedding_provider)
+    results = engine.search(
+        notes_with_embeddings,
+        content,
+        top_k=top_k + 1,  # +1 por si la nota recién guardada aparece
+        min_score=min_score,
+    )
+
+    if exclude_id:
+        results = [r for r in results if r.get("id") != exclude_id]
+
+    return results[:top_k]

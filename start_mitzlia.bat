@@ -15,6 +15,20 @@ if not exist ".env" (
     exit /b 1
 )
 
+REM Verificar que Ollama esta disponible
+echo  Verificando Ollama...
+ollama list >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo  ADVERTENCIA: Ollama no esta respondiendo.
+    echo  Si AI_PROVIDER=ollama, los mensajes fallaran hasta que Ollama arranque.
+    echo  Puedes iniciarlo con:  ollama serve
+    echo.
+    timeout /t 3 /nobreak >nul
+) else (
+    echo  Ollama OK.
+)
+
 echo  [1/3] Iniciando API REST...
 start "Mitzlia - API" cmd /k "python run_api.py"
 timeout /t 2 /nobreak >nul

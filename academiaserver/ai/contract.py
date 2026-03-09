@@ -1,7 +1,8 @@
 from datetime import datetime
 
 
-ALLOWED_TYPES = {"nota", "recordatorio", "idea", "tarea", "pregunta"}
+ALLOWED_TYPES = {"nota", "recordatorio", "idea", "tarea", "pregunta",
+                 "planeacion", "guion", "slides"}  # tipos educativos (Fase 4.2)
 ALLOWED_PRIORITIES = {"baja", "media", "alta"}
 
 
@@ -86,8 +87,8 @@ def validate_ai_analysis(analysis: dict) -> dict:
         raise ValueError(f"priority no permitida: {priority}")
 
     reply_text = _as_text(analysis.get("reply_text"))
-    if len(reply_text) > 220:
-        raise ValueError("reply_text excede 220 caracteres")
+    if len(reply_text) > 600:
+        raise ValueError("reply_text excede 600 caracteres")
 
     normalized = {
         "note_type": note_type,

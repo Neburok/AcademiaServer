@@ -24,7 +24,13 @@ class CloudProvider(AIProvider):
         self.http_max_retries = max(1, http_max_retries)
         self.http_retry_delay_seconds = max(0, http_retry_delay_seconds)
 
-    def analyze_message(self, text: str, context: list[str] = [], memory: list[dict] = []) -> dict:
+    def analyze_message(
+        self,
+        text: str,
+        context: list[str] = [],
+        memory: list[dict] = [],
+        system_prompt_override: str | None = None,
+    ) -> dict:
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY no configurada")
 
@@ -33,11 +39,12 @@ class CloudProvider(AIProvider):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+        system = system_prompt_override if system_prompt_override else get_system_prompt()
         payload = {
             "model": self.chat_model,
             "response_format": {"type": "json_object"},
             "messages": [
-                {"role": "system", "content": get_system_prompt()},
+                {"role": "system", "content": system},
                 {"role": "user", "content": build_user_message(text, context, memory)},
             ],
         }
