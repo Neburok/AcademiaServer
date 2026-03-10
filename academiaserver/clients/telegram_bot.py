@@ -16,17 +16,22 @@ from telegram.ext import (
     filters,
 )
 
-from academiaserver.ai import AIOrchestrator, CloudProvider, HybridProvider, OllamaProvider
+from academiaserver.ai import AIOrchestrator, ClaudeProvider, CloudProvider, HybridProvider, OllamaProvider
 from academiaserver.ai.agent_router import AgentRouter
 from academiaserver.ai.whisper_transcriber import WhisperTranscriber
 from academiaserver.config import (
     AI_CLOUD_ALLOW_SENSITIVE,
+    AI_CLOUD_PROVIDER,
     AI_ENABLE_CLOUD_FALLBACK,
     AI_HTTP_MAX_RETRIES,
     AI_HTTP_RETRY_DELAY_SECONDS,
     AI_MAX_RETRIES,
     AI_PROVIDER,
     AI_TIMEOUT_SECONDS,
+    ANTHROPIC_API_KEY,
+    ANTHROPIC_BASE_URL,
+    ANTHROPIC_CHAT_MODEL,
+    ANTHROPIC_MAX_TOKENS,
     LOG_DIR,
     OLLAMA_BASE_URL,
     OLLAMA_CHAT_MODEL,
@@ -109,6 +114,44 @@ def validate_config():
     )
 
 
+def _build_cloud_provider():
+    """Instancia el proveedor cloud según AI_CLOUD_PROVIDER (openai | claude).
+
+    Retrocompatible: si AI_CLOUD_PROVIDER no está en .env, usa OpenAI.
+    """
+    if AI_CLOUD_PROVIDER == "claude":
+        log_event(
+            "ai_provider_initialized",
+            provider="claude",
+            model=ANTHROPIC_CHAT_MODEL,
+            base_url=ANTHROPIC_BASE_URL,
+        )
+        return ClaudeProvider(
+            api_key=ANTHROPIC_API_KEY,
+            base_url=ANTHROPIC_BASE_URL,
+            chat_model=ANTHROPIC_CHAT_MODEL,
+            timeout_seconds=AI_TIMEOUT_SECONDS,
+            http_max_retries=AI_HTTP_MAX_RETRIES,
+            http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
+            max_tokens=ANTHROPIC_MAX_TOKENS,
+        )
+    # default: openai
+    log_event(
+        "ai_provider_initialized",
+        provider="cloud",
+        model=OPENAI_CHAT_MODEL,
+        base_url=OPENAI_BASE_URL,
+    )
+    return CloudProvider(
+        api_key=OPENAI_API_KEY,
+        base_url=OPENAI_BASE_URL,
+        chat_model=OPENAI_CHAT_MODEL,
+        timeout_seconds=AI_TIMEOUT_SECONDS,
+        http_max_retries=AI_HTTP_MAX_RETRIES,
+        http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
+    )
+
+
 def build_orchestrator() -> AIOrchestrator:
     provider = None
     local_provider = OllamaProvider(
@@ -128,31 +171,18 @@ def build_orchestrator() -> AIOrchestrator:
             base_url=OLLAMA_BASE_URL,
         )
     elif AI_PROVIDER == "cloud":
-        provider = CloudProvider(
-            api_key=OPENAI_API_KEY,
-            base_url=OPENAI_BASE_URL,
-            chat_model=OPENAI_CHAT_MODEL,
-            timeout_seconds=AI_TIMEOUT_SECONDS,
-            http_max_retries=AI_HTTP_MAX_RETRIES,
-            http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
-        )
-        log_event(
-            "ai_provider_initialized",
-            provider="cloud",
-            model=OPENAI_CHAT_MODEL,
-            base_url=OPENAI_BASE_URL,
-        )
+        provider = _build_cloud_provider()
     elif AI_PROVIDER == "hybrid":
-        cloud_provider = None
-        if OPENAI_API_KEY:
-            cloud_provider = CloudProvider(
-                api_key=OPENAI_API_KEY,
-                base_url=OPENAI_BASE_URL,
-                chat_model=OPENAI_CHAT_MODEL,
-                timeout_seconds=AI_TIMEOUT_SECONDS,
-                http_max_retries=AI_HTTP_MAX_RETRIES,
-                http_retry_delay_seconds=AI_HTTP_RETRY_DELAY_SECONDS,
-            )
+        # Construye el proveedor cloud solo si hay key configurada
+        has_cloud_key = bool(
+            ANTHROPIC_API_KEY if AI_CLOUD_PROVIDER == "claude" else OPENAI_API_KEY
+        )
+        cloud_provider = _build_cloud_provider() if has_cloud_key else None
+
+        # Modelo cloud para el log
+        cloud_model_label = (
+            ANTHROPIC_CHAT_MODEL if AI_CLOUD_PROVIDER == "claude" else OPENAI_CHAT_MODEL
+        )
 
         provider = HybridProvider(
             local_provider=local_provider,
@@ -164,7 +194,8 @@ def build_orchestrator() -> AIOrchestrator:
             "ai_provider_initialized",
             provider="hybrid",
             local_model=OLLAMA_CHAT_MODEL,
-            cloud_model=OPENAI_CHAT_MODEL if OPENAI_API_KEY else "not_configured",
+            cloud_backend=AI_CLOUD_PROVIDER,
+            cloud_model=cloud_model_label if has_cloud_key else "not_configured",
             cloud_fallback=AI_ENABLE_CLOUD_FALLBACK,
             allow_sensitive_to_cloud=AI_CLOUD_ALLOW_SENSITIVE,
         )
