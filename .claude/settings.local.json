@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "mcp__filesystem__list_directory",
-      "mcp__filesystem__directory_tree"
+      "mcp__filesystem__directory_tree",
+      "Bash(cd \"C:/Repositorios/AcademiaServer\" && rm -rf academiaserver/ai academiaserver/events academiaserver/search academiaserver/digest academiaserver/document_gen && rm -f academiaserver/api.py academiaserver/schemas.py academiaserver/models.py academiaserver/test_datetime.py academiaserver/processing/pipeline.py academiaserver/processing/enrichment.py && rm -f main.py run_api.py setup_windows.py start_mitzlia.bat stop_mitzlia.bat && rm -f test_pipeline.py test_save_idea.py test_scheduler.py && rm -f alembic.ini reset_db.py && rm -rf migrations)"
     ]
   }
 }
