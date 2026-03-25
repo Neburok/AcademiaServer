@@ -6,116 +6,150 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Toda la comunicación, documentación y comentarios de código deben estar en **español**. Esto incluye respuestas en el chat, comentarios en el código, docstrings, archivos de documentación y mensajes de commit.
 
-## Project Overview
+## Visión general
 
-**AcademiaServer** is the backend infrastructure for **Mitzlia**, an intelligent academic cognitive assistant. It captures ideas, processes natural language notes, manages reminders, and integrates with Telegram. The system is designed as a personal "second brain" for academic work.
+**AcademiaServer** es la infraestructura para **Mitzlia**, un asistente cognitivo académico para docentes. Captura ideas, procesa notas en lenguaje natural, gestiona recordatorios, genera documentos educativos (planeaciones, guiones, diapositivas) e integra con Telegram y Whisper (voz).
 
-## Running the System
+## Ejecutar el sistema
 
 ```bash
 # Inicializar la base de datos (primera vez)
 alembic upgrade head
 
-# Iniciar el servidor FastAPI
+# Servidor FastAPI
 uvicorn academiaserver.api:app --reload
 
-# Iniciar el bot de Telegram (solo maneja mensajes entrantes)
+# Bot de Telegram (mensajes entrantes + agentes educativos)
 python -m academiaserver.clients.telegram_bot
 
-# Iniciar el scheduler de recordatorios (proceso independiente)
+# Scheduler de recordatorios (proceso independiente)
 python run_scheduler.py
 ```
 
-## Database Migrations (Alembic)
+## Migraciones (Alembic)
 
 ```bash
-# Aplicar todas las migraciones pendientes
-alembic upgrade head
-
-# Crear nueva migración tras cambiar models.py
-alembic revision --autogenerate -m "descripcion del cambio"
-
-# Revertir última migración
-alembic downgrade -1
+alembic upgrade head                                        # Aplicar migraciones pendientes
+alembic revision --autogenerate -m "descripcion del cambio" # Nueva migración tras cambiar models.py
+alembic downgrade -1                                        # Revertir última migración
 ```
 
-## CLI Commands (main.py)
+Migraciones existentes: `0001_crear_tabla_notas.py`, `0002_agregar_entidades.py`.
+
+## CLI (main.py)
 
 ```bash
-python main.py save --content "..." [--title "..."]   # Guardar nota
-python main.py get --id <note_id>                      # Obtener nota por ID
-python main.py list                                    # Listar todas las notas
-python main.py search <query> [--backend keyword]      # Buscar notas
-python main.py log                                     # Mostrar logs de actividad
-python main.py digest                                  # Generar digest diario
+python main.py save --content "..." [--title "..."]
+python main.py get --id <id>
+python main.py list
+python main.py search <query> [--backend keyword|semantic]
+python main.py log
+python main.py digest
 ```
 
-## Running Tests
+## Tests
 
 ```bash
-pytest                          # Ejecutar todos los tests
-pytest tests/test_file.py       # Ejecutar un archivo de tests
-pytest tests/test_file.py::test_name  # Ejecutar un test específico
+pytest                                          # Todos los tests
+pytest tests/test_api.py                        # Archivo específico
+pytest tests/test_api.py::ApiTests::test_save_crea_nota_con_esquema_compatible  # Test específico
 ```
 
-## Architecture
+**Patrones de test:**
+- Los tests usan `unittest.TestCase`. Para tests async usar `@pytest.mark.anyio` (`anyio` instalado; `pytest-asyncio` no está en el proyecto).
+- Tests de FastAPI/BD: usar `StaticPool` de SQLAlchemy con SQLite in-memory. Hacer monkey-patch sobre `db_module.SessionLocal` y `db_module.engine` (no importar `SessionLocal` directamente).
 
-The system follows an event-driven modular pipeline:
+## Arquitectura
+
+Pipeline de procesamiento de mensajes:
 
 ```
-User (Telegram / CLI / FastAPI)
-  → Pipeline (classify + enrich + parse reminders)
-  → AI Orchestrator (Ollama local → OpenAI cloud fallback)
-  → Canonicalize Note
-  → Save to SQLite (academiaserver/db/) via EventBus
-  → Logger (logs/activity.log)
+Usuario (Telegram / CLI / FastAPI)
+  → AgentRouter (detecta tareas educativas: planeacion, guion, slides)
+      → EducationalAgent (system_prompt especializado → genera .md/.tex vía DocumentWriter)
+  → AIOrchestrator (classify + enrich + parse reminders)
+      → AIProvider (OllamaProvider | CloudProvider | ClaudeProvider | HybridProvider)
+      → validate_ai_analysis → canonicalize_note → enrich_note_metadata
+  → save_idea → SQLite via repository + EventBus
+  → EmbeddingProvider (nomic-embed-text) → update_embedding
 
-Scheduler (60s loop, proceso independiente)
-  → DB query → Find due reminders → HTTP POST Telegram → Mark reminded
+Scheduler (proceso independiente, intervalo configurable)
+  → BD query → find due reminders → HTTP POST Telegram → mark reminded
 ```
 
-### Key Modules
+### Módulos principales
 
-- **`academiaserver/api.py`** — FastAPI REST endpoints (`/save`, `/list`, `/idea/{id}`, `/search`, `/digest/daily`, `/log`)
-- **`academiaserver/core.py`** — Core business logic: save/load/search ideas (usa repository + bus de eventos)
-- **`academiaserver/config.py`** — All configuration from `.env`, with defaults
-- **`academiaserver/db/`** — Capa de datos SQLite+SQLAlchemy: `database.py`, `models.py`, `repository.py`
-- **`academiaserver/events/bus.py`** — Bus de eventos pub/sub (singleton `bus`). Eventos: `nota.guardada`, `recordatorio.enviado`, `nota.enriquecida`
-- **`academiaserver/processing/`** — Classification (nota vs. recordatorio), enrichment, reminder datetime parsing
-- **`academiaserver/ai/`** — AI layer: `OllamaProvider`, `CloudProvider`, `HybridProvider` orchestrated by `AIOrchestrator`; includes privacy detection and output schema validation
-- **`academiaserver/scheduler/reminders_scheduler.py`** — Proceso independiente: consulta la BD, envía Telegram via HTTP directo, marca como enviados
-- **`academiaserver/clients/telegram_bot.py`** — Bot de Telegram (solo maneja mensajes entrantes, sin scheduler)
-- **`academiaserver/search/`** — `KeywordSearchEngine` (implemented); `SemanticSearchEngine` (stub for future embeddings)
-- **`academiaserver/digest/`** — Daily summary generation
-- **`migrations/`** — Migraciones Alembic. Primera: `0001_crear_tabla_notas.py`
+- **`academiaserver/core.py`** — Lógica de negocio: `save_idea`, `search_ideas`, `get_memory_context`, `find_related_notes`, `reembed_notas`. Instancia un `EmbeddingProvider` singleton a nivel módulo.
+- **`academiaserver/api.py`** — FastAPI: `POST /save`, `GET /list`, `GET /idea/{id}`, `GET /search?query&backend`, `GET /digest/daily`, `GET /log`.
+- **`academiaserver/config.py`** — Toda la configuración desde `.env` con defaults. Fuente de verdad para variables de entorno.
+- **`academiaserver/db/`** — `database.py` (engine, SessionLocal, Base, init_db), `models.py` (ORM `Nota`), `repository.py` (`save_nota`, `get_all_with_embeddings`, `update_embedding`, `_nota_to_dict`).
+- **`academiaserver/events/bus.py`** — EventBus pub/sub singleton `bus`. Eventos: `nota.guardada`, `recordatorio.enviado`, `nota.enriquecida`.
+- **`academiaserver/ai/`** — Capa IA:
+  - `provider.py` — ABC `AIProvider` con método `analyze_message(text, context, memory, system_prompt_override)`.
+  - `ollama_provider.py`, `cloud_provider.py` (OpenAI), `claude_provider.py` (Anthropic), `hybrid_provider.py`.
+  - `orchestrator.py` — `AIOrchestrator`: reintentos, fallback a reglas, construcción de nota desde análisis IA.
+  - `agent_router.py` — `AgentRouter`: detección regex de tareas docentes + enrutamiento a `EducationalAgent`.
+  - `agents/` — `base.py` (ABC `EducationalAgent`), `planning.py`, `script.py`, `slides.py`. Los agentes inyectan su propio system prompt y soportan multi-turno vía `missing_info`.
+  - `embedding_provider.py` — `EmbeddingProvider` (POST `/api/embed` Ollama, serialización float32 con `struct`).
+  - `whisper_transcriber.py` — `WhisperTranscriber` (faster-whisper local → OpenAI fallback). Singleton `_whisper` en el bot.
+  - `contract.py` — `validate_ai_analysis` valida el esquema JSON de salida de la IA.
+  - `prompts.py` — System prompts para el orchestrator general.
+- **`academiaserver/processing/`** — `pipeline.py` (fallback basado en reglas), `classifier.py`, `enrichment.py`, `reminders.py` (parseo de fechas/horas).
+- **`academiaserver/search/`** — `keyword.py` (`KeywordSearchEngine`), `semantic.py` (`SemanticSearchEngine`, similitud coseno puro Python), `service.py` (`SearchService` solo maneja keyword).
+- **`academiaserver/document_gen/`** — `writer.py` (`DocumentWriter`: guarda `.md`/`.tex` en `OUTPUTS_DIR` con nombre `YYYYMMDD_HHMMSS_<task>_<slug>`), `beamer.py` (`MarkdownToBeamer`: convierte Markdown a LaTeX Beamer).
+- **`academiaserver/clients/telegram_bot.py`** — Bot Telegram: estado por chat (`_chat_contexts` deque maxlen=5, `_active_educational_tasks` para multi-turno educativo), routing educativo antes del orchestrator general.
+- **`academiaserver/scheduler/reminders_scheduler.py`** — Proceso independiente: envía Telegram via HTTP directo (`requests`).
 
-### Data Storage
+### Almacenamiento de datos
 
-Notes are stored in **SQLite** (`academia.db`) via SQLAlchemy ORM. Table: `notas`. Schema managed by Alembic.
+SQLite (`academia.db`) via SQLAlchemy ORM. Tabla `notas`. Schema gestionado por Alembic.
 
-- `repository._nota_to_dict()` reconstructs the canonical dict format (with nested `metadata`) for backward compatibility with all existing modules.
-- Idempotency: duplicate content is detected via SHA-256 hash (`content_hash` field, indexed).
+- `repository._nota_to_dict()` reconstruye el dict canónico con `metadata.enrichment.{topics,entities,summary,priority}`, `metadata.datetime`, `metadata.reminded`.
+- Idempotencia: `repository.save_nota()` detecta duplicados via SHA-256 del contenido (`content_hash`, indexado).
+- Embeddings: serializados como bytes `float32` con `struct`. `get_all_with_embeddings()` retorna solo notas con embedding. Para regenerar embeddings faltantes: `core.reembed_notas()`.
 
-### AI Configuration
+### Configuración de IA
 
-The AI layer supports three modes via `AI_PROVIDER` in `.env`:
-- `ollama` — Local-only (Ollama, model `gemma3:4b` by default)
-- `cloud` — OpenAI only
-- `hybrid` — Tries Ollama first, falls back to OpenAI if it fails
+Variable `AI_PROVIDER` en `.env`:
+- `rules` (default) — Sin IA, solo clasificación por reglas.
+- `ollama` — Solo local (modelo `qwen3:8b` por defecto).
+- `cloud` — Proveedor cloud según `AI_CLOUD_PROVIDER` (`openai` o `claude`).
+- `hybrid` — Ollama primero, fallback a cloud si falla (requiere `AI_ENABLE_CLOUD_FALLBACK=true`).
 
-`AI_CLOUD_ALLOW_SENSITIVE=false` prevents sensitive messages from being sent to cloud providers.
+`AI_CLOUD_ALLOW_SENSITIVE=false` evita enviar mensajes sensibles a proveedores cloud.
 
-## Configuration (`.env`)
+### Agentes educativos (Fase 4.2)
 
-Key variables:
-- `DB_PATH` — SQLite database path (default: `academia.db`)
-- `TELEGRAM_TOKEN` / `TELEGRAM_CHAT_ID` — Bot credentials (used by both bot and scheduler)
-- `AI_PROVIDER` — `ollama | cloud | hybrid`
-- `OLLAMA_BASE_URL` / `OLLAMA_CHAT_MODEL`
-- `OPENAI_API_KEY`
-- `SCHEDULER_INTERVAL_SECONDS` — Reminder check frequency (default: 60)
-- `LOG_DIR` — Log directory (default: `logs`)
+`AgentRouter` detecta tareas en el texto via regex (`planeacion`, `guion`, `slides`) y enruta a `EducationalAgent`. Los agentes soportan multi-turno: si `missing_info != []`, el bot guarda el `task_type` en `_active_educational_tasks[chat_id]` y pregunta por los datos faltantes. Al completar, guarda la nota y envía el documento como adjunto en Telegram (`.md` para planeación/guión, `.tex` Beamer para diapositivas).
 
-## Development Roadmap
+## Configuración (`.env`)
 
-Infrastructure vulnerabilities corrected (Sprints A-E): SQLite storage, Alembic migrations, idempotency, event bus, decoupled scheduler. **Phase 3** (Assisted Intelligence) is next: semantic search via embeddings (sqlite-vec) and advanced AI enrichment.
+```
+DB_PATH=academia.db
+TELEGRAM_TOKEN=...
+TELEGRAM_CHAT_ID=...
+AI_PROVIDER=rules              # rules | ollama | cloud | hybrid
+AI_CLOUD_PROVIDER=openai       # openai | claude
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_CHAT_MODEL=qwen3:8b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+AI_ENABLE_CLOUD_FALLBACK=false
+AI_CLOUD_ALLOW_SENSITIVE=false
+OPENAI_API_KEY=...
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+ANTHROPIC_API_KEY=...
+ANTHROPIC_BASE_URL=https://api.anthropic.com/v1
+ANTHROPIC_CHAT_MODEL=claude-3-5-sonnet-20241022
+ANTHROPIC_MAX_TOKENS=1024
+WHISPER_MODEL=small
+WHISPER_LANGUAGE=es
+WHISPER_DEVICE=cpu             # cuda en rubenpc
+WHISPER_COMPUTE_TYPE=int8      # float16 en rubenpc con CUDA
+SCHEDULER_INTERVAL_SECONDS=60
+LOG_DIR=logs
+OUTPUTS_DIR=outputs
+TEMPLATES_DIR=templates
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8000
+```
