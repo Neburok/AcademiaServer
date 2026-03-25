@@ -5,6 +5,31 @@
 
 ---
 
+## Antes de migrar — configurar GitHub
+
+El repositorio tiene dos ramas:
+
+| Rama | Contenido |
+|------|-----------|
+| `main` | Versión completa (Windows, Ollama, agentes educativos, etc.) |
+| `simplificado` | Versión reducida para Fedora (Claude directo, sin Ollama) |
+
+Para que `git clone` descargue automáticamente la versión correcta, hay que cambiar la rama por defecto en GitHub **una sola vez, desde Windows, antes de migrar**:
+
+1. Ir a **https://github.com/Neburok/AcademiaServer**
+2. Clic en **Settings** (pestaña superior del repositorio)
+3. En el menú izquierdo: **General**
+4. Buscar la sección **Default branch**
+5. Clic en el ícono de editar (lápiz) junto a `main`
+6. Seleccionar `simplificado` en el desplegable
+7. Clic en **Update** → confirmar en el diálogo
+
+A partir de ese momento, cualquier `git clone` del repositorio descargará directamente la versión simplificada.
+
+> **Nota:** La rama `main` con la versión completa sigue existiendo en GitHub, no se borra. Si en algún momento necesitás volver a ella en Windows: `git checkout main`.
+
+---
+
 ## Resumen de fases
 
 | Fase | Descripción | Estimado |
@@ -59,11 +84,22 @@ python3 --version
 
 ### 2.1 Clonar desde GitHub
 
+Si ya configuraste la rama por defecto en GitHub (ver sección anterior), un clone normal es suficiente:
+
 ```bash
 cd ~
 git clone https://github.com/Neburok/AcademiaServer.git
 cd AcademiaServer
 ```
+
+Verificar que estás en la rama correcta:
+
+```bash
+git branch
+# debe mostrar: * simplificado
+```
+
+> Si por alguna razón bajó `main`, cambiar con: `git checkout simplificado`
 
 ### 2.2 Crear entorno virtual e instalar dependencias
 
